@@ -8,7 +8,7 @@ import android.os.IBinder
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.rosan.dhizuku.api.Dhizuku
-import com.rosan.dhizuku.api.DhizukuRequestServer
+import com.rosan.dhizuku.api.DhizukuRequestPermissionListener
 import com.rosan.dhizuku.api.DhizukuUserServiceArgs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -27,8 +27,8 @@ class KamalFileManager(private val context: Context) {
 
             if (!Dhizuku.isPermissionGranted()) {
                 val granted = suspendCancellableCoroutine { cont ->
-                    Dhizuku.requestPermission(object : DhizukuRequestServer {
-                        override fun onRequestPermissionResult(grantResult: Int) {
+                    Dhizuku.requestPermission(object : DhizukuRequestPermissionListener {
+                        override fun onRequestPermission(grantResult: Int) {
                             cont.resume(grantResult == PackageManager.PERMISSION_GRANTED)
                         }
                     })
