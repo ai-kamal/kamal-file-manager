@@ -20,16 +20,16 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK Platform 37
+        run: |
+          sdkmanager --update
+          echo "y" | sdkmanager "platforms;android-37" "build-tools;35.0.0"
+
       - name: Write local.properties
         run: echo "sdk.dir=$ANDROID_HOME" > local.properties
-
-      - name: Accept Android SDK licenses
-        run: |
-          mkdir -p "$ANDROID_HOME/licenses"
-          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > "$ANDROID_HOME/licenses/android-sdk-license"
-          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> "$ANDROID_HOME/licenses/android-sdk-license"
-          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" >> "$ANDROID_HOME/licenses/android-sdk-license"
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-37" "build-tools;35.0.0" 2>&1 | tail -5 || true
 
       - name: Make gradlew executable
         run: chmod +x gradlew && ls -la gradlew
