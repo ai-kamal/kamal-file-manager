@@ -29,7 +29,14 @@ jobs:
             > "$ANDROID_HOME/licenses/android-sdk-preview-license"
           SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -1)
           echo "Using sdkmanager at: $SDKMANAGER"
-          yes | "$SDKMANAGER" "platforms;android-37" "build-tools;35.0.0"
+          # channel=3 = canary, includes preview/pre-release SDKs like android-37
+          if yes | "$SDKMANAGER" --channel=3 "platforms;android-37" "build-tools;35.0.0"; then
+            echo "android-37 installed successfully"
+          else
+            echo "=== android-37 not found, listing all available android platforms ==="
+            "$SDKMANAGER" --list --channel=3 2>/dev/null | grep -i "platforms;android" | head -30
+            exit 1
+          fi
 
       - name: Write local.properties
         run: echo "sdk.dir=$ANDROID_HOME" > local.properties
