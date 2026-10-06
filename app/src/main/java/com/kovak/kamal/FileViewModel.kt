@@ -23,7 +23,6 @@ class FileViewModel(private val manager: KamalFileManager) : ViewModel() {
     private val _toastMsg = MutableLiveData<String?>(null)
     val toastMsg: LiveData<String?> = _toastMsg
 
-    // Clipboard for copy/paste
     private var clipboardPaths = mutableListOf<String>()
     private var clipboardMode = ClipMode.NONE
 
@@ -33,10 +32,7 @@ class FileViewModel(private val manager: KamalFileManager) : ViewModel() {
             val parts = path.split("/").filter { it.isNotEmpty() }
             val crumbs = mutableListOf<String>()
             var accumulated = ""
-            for (part in parts) {
-                accumulated += "/$part"
-                crumbs.add(accumulated)
-            }
+            for (part in parts) { accumulated += "/$part"; crumbs.add(accumulated) }
             return crumbs
         }
 
@@ -48,9 +44,7 @@ class FileViewModel(private val manager: KamalFileManager) : ViewModel() {
             val result = manager.listFiles(path)
             _files.value = result
             _loading.value = false
-            if (result.isEmpty() && path != "/sdcard") {
-                _error.value = "Empty folder or access denied"
-            }
+            if (result.isEmpty()) _error.value = "Empty folder or access denied"
         }
     }
 
@@ -62,9 +56,7 @@ class FileViewModel(private val manager: KamalFileManager) : ViewModel() {
         return true
     }
 
-    fun refresh() {
-        loadPath(_currentPath.value ?: "/sdcard")
-    }
+    fun refresh() = loadPath(_currentPath.value ?: "/sdcard")
 
     fun copyToClipboard(paths: List<String>) {
         clipboardPaths = paths.toMutableList()
@@ -79,10 +71,7 @@ class FileViewModel(private val manager: KamalFileManager) : ViewModel() {
     }
 
     fun paste() {
-        if (clipboardPaths.isEmpty()) {
-            _toastMsg.value = "Nothing to paste"
-            return
-        }
+        if (clipboardPaths.isEmpty()) { _toastMsg.value = "Nothing to paste"; return }
         val destDir = _currentPath.value ?: return
         viewModelScope.launch {
             _loading.value = true
@@ -97,10 +86,7 @@ class FileViewModel(private val manager: KamalFileManager) : ViewModel() {
                 }
                 if (ok) successCount++
             }
-            if (clipboardMode == ClipMode.CUT) {
-                clipboardPaths.clear()
-                clipboardMode = ClipMode.NONE
-            }
+            if (clipboardMode == ClipMode.CUT) { clipboardPaths.clear(); clipboardMode = ClipMode.NONE }
             _loading.value = false
             _toastMsg.value = "Pasted $successCount item(s)"
             refresh()
@@ -111,9 +97,7 @@ class FileViewModel(private val manager: KamalFileManager) : ViewModel() {
         viewModelScope.launch {
             _loading.value = true
             var count = 0
-            paths.forEach { path ->
-                if (manager.delete(path)) count++
-            }
+            paths.forEach { if (manager.delete(it)) count++ }
             _loading.value = false
             _toastMsg.value = "Deleted $count item(s)"
             refresh()
@@ -122,9 +106,8 @@ class FileViewModel(private val manager: KamalFileManager) : ViewModel() {
 
     fun createFolder(name: String) {
         val base = _currentPath.value ?: return
-        val newPath = "$base/$name"
         viewModelScope.launch {
-            val ok = manager.createFolder(newPath)
+            val ok = manager.createFolder("$base/$name")
             _toastMsg.value = if (ok) "Folder created" else "Failed to create folder"
             if (ok) refresh()
         }
@@ -132,9 +115,8 @@ class FileViewModel(private val manager: KamalFileManager) : ViewModel() {
 
     fun rename(oldPath: String, newName: String) {
         val parentDir = oldPath.substringBeforeLast("/")
-        val newPath = "$parentDir/$newName"
         viewModelScope.launch {
-            val ok = manager.move(oldPath, newPath)
+            val ok = manager.move(oldPath, "$parentDir/$newName")
             _toastMsg.value = if (ok) "Renamed" else "Rename failed"
             if (ok) refresh()
         }

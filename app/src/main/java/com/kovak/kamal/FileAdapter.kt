@@ -20,12 +20,11 @@ class FileAdapter(
     private val onItemLongClick: (FileItem, View) -> Boolean
 ) : ListAdapter<FileItem, FileAdapter.FileViewHolder>(FileDiffCallback()) {
 
-    private val selectedPaths = mutableSetOf<String>()
+    val selectedPaths = mutableSetOf<String>()
     var selectionMode = false
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FileViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_file, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_file, parent, false)
         return FileViewHolder(view)
     }
 
@@ -34,8 +33,7 @@ class FileAdapter(
     }
 
     fun toggleSelection(path: String) {
-        if (selectedPaths.contains(path)) selectedPaths.remove(path)
-        else selectedPaths.add(path)
+        if (selectedPaths.contains(path)) selectedPaths.remove(path) else selectedPaths.add(path)
         notifyDataSetChanged()
     }
 
@@ -61,42 +59,26 @@ class FileAdapter(
         fun bind(item: FileItem) {
             tvName.text = item.name
             tvMeta.text = buildMeta(item)
-
-            // Set icon based on file type
             ivIcon.setImageResource(getIconRes(item.fileTypeIcon))
             ivIcon.setColorFilter(getIconTint(item.fileTypeIcon, context))
 
-            // Selection state
             val isSelected = selectedPaths.contains(item.path)
             ivSelected.visibility = if (selectionMode) View.VISIBLE else View.GONE
             ivSelected.setImageResource(
-                if (isSelected) R.drawable.ic_check_circle
-                else R.drawable.ic_radio_unchecked
+                if (isSelected) R.drawable.ic_check_circle else R.drawable.ic_radio_unchecked
             )
-
             itemView.isActivated = isSelected
             itemView.alpha = if (item.isHidden) 0.5f else 1.0f
 
             itemView.setOnClickListener {
-                if (selectionMode) {
-                    toggleSelection(item.path)
-                } else {
-                    onItemClick(item)
-                }
+                if (selectionMode) toggleSelection(item.path) else onItemClick(item)
             }
-
-            itemView.setOnLongClickListener { v ->
-                selectionMode = true
-                toggleSelection(item.path)
-                onItemLongClick(item, v)
-            }
+            itemView.setOnLongClickListener { v -> onItemLongClick(item, v) }
         }
 
         private fun buildMeta(item: FileItem): String {
-            val date = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-                .format(Date(item.lastModified))
-            return if (item.isDirectory) date
-            else "${item.displaySize}  ·  $date"
+            val date = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(item.lastModified))
+            return if (item.isDirectory) date else "${item.displaySize}  ·  $date"
         }
     }
 
@@ -113,15 +95,15 @@ class FileAdapter(
         FileType.UNKNOWN -> R.drawable.ic_file
     }
 
-    private fun getIconTint(type: FileType, context: Context): Int = when (type) {
-        FileType.FOLDER -> ContextCompat.getColor(context, R.color.tint_folder)
-        FileType.IMAGE -> ContextCompat.getColor(context, R.color.tint_image)
-        FileType.VIDEO -> ContextCompat.getColor(context, R.color.tint_video)
-        FileType.AUDIO -> ContextCompat.getColor(context, R.color.tint_audio)
-        FileType.PDF -> ContextCompat.getColor(context, R.color.tint_pdf)
-        FileType.ARCHIVE -> ContextCompat.getColor(context, R.color.tint_archive)
-        FileType.APK -> ContextCompat.getColor(context, R.color.tint_apk)
-        else -> ContextCompat.getColor(context, R.color.tint_default)
+    private fun getIconTint(type: FileType, ctx: Context): Int = when (type) {
+        FileType.FOLDER -> ContextCompat.getColor(ctx, R.color.tint_folder)
+        FileType.IMAGE -> ContextCompat.getColor(ctx, R.color.tint_image)
+        FileType.VIDEO -> ContextCompat.getColor(ctx, R.color.tint_video)
+        FileType.AUDIO -> ContextCompat.getColor(ctx, R.color.tint_audio)
+        FileType.PDF -> ContextCompat.getColor(ctx, R.color.tint_pdf)
+        FileType.ARCHIVE -> ContextCompat.getColor(ctx, R.color.tint_archive)
+        FileType.APK -> ContextCompat.getColor(ctx, R.color.tint_apk)
+        else -> ContextCompat.getColor(ctx, R.color.tint_default)
     }
 
     class FileDiffCallback : DiffUtil.ItemCallback<FileItem>() {

@@ -20,7 +20,6 @@ class KamalFileManager(private val context: Context) {
     private var service: IRemoteService? = null
     private val gson = Gson()
 
-    // ─── Initialise Dhizuku (auto — no OTP, no wireless debug prompt) ────────
     suspend fun init(): InitResult = withContext(Dispatchers.IO) {
         return@withContext try {
             val ready = Dhizuku.init(context)
@@ -61,7 +60,6 @@ class KamalFileManager(private val context: Context) {
 
     fun isReady() = service != null
 
-    // ─── List files at path ────────────────────────────────────────────────────
     suspend fun listFiles(path: String): List<FileItem> = withContext(Dispatchers.IO) {
         try {
             val json = service?.listFiles(path) ?: return@withContext emptyList()
@@ -84,37 +82,30 @@ class KamalFileManager(private val context: Context) {
         }
     }
 
-    // ─── Read file bytes ────────────────────────────────────────────────────────
     suspend fun readFile(path: String): ByteArray? = withContext(Dispatchers.IO) {
         try { service?.readFile(path) } catch (e: Exception) { null }
     }
 
-    // ─── Write bytes to file ────────────────────────────────────────────────────
     suspend fun writeFile(path: String, data: ByteArray): Boolean = withContext(Dispatchers.IO) {
         try { service?.writeFile(path, data) ?: false } catch (e: Exception) { false }
     }
 
-    // ─── Delete ─────────────────────────────────────────────────────────────────
     suspend fun delete(path: String): Boolean = withContext(Dispatchers.IO) {
         try { service?.deleteFile(path) ?: false } catch (e: Exception) { false }
     }
 
-    // ─── Copy ───────────────────────────────────────────────────────────────────
     suspend fun copy(src: String, dest: String): Boolean = withContext(Dispatchers.IO) {
         try { service?.copyFile(src, dest) ?: false } catch (e: Exception) { false }
     }
 
-    // ─── Move ───────────────────────────────────────────────────────────────────
     suspend fun move(src: String, dest: String): Boolean = withContext(Dispatchers.IO) {
         try { service?.moveFile(src, dest) ?: false } catch (e: Exception) { false }
     }
 
-    // ─── Create folder ──────────────────────────────────────────────────────────
     suspend fun createFolder(path: String): Boolean = withContext(Dispatchers.IO) {
         try { service?.createDirectory(path) ?: false } catch (e: Exception) { false }
     }
 
-    // ─── Storage info ───────────────────────────────────────────────────────────
     suspend fun getFreeSpace(path: String): Long = withContext(Dispatchers.IO) {
         try { service?.getFreeSpace(path) ?: 0L } catch (e: Exception) { 0L }
     }
@@ -124,10 +115,6 @@ class KamalFileManager(private val context: Context) {
     }
 
     enum class InitResult {
-        SUCCESS,
-        DHIZUKU_NOT_AVAILABLE,
-        PERMISSION_DENIED,
-        SERVICE_FAILED,
-        ERROR
+        SUCCESS, DHIZUKU_NOT_AVAILABLE, PERMISSION_DENIED, SERVICE_FAILED, ERROR
     }
 }

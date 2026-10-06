@@ -1,5 +1,6 @@
 package com.kovak.kamal
 
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,15 +15,12 @@ class BreadcrumbAdapter(
 ) : ListAdapter<String, BreadcrumbAdapter.CrumbViewHolder>(CrumbDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CrumbViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_breadcrumb, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_breadcrumb, parent, false)
         return CrumbViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: CrumbViewHolder, position: Int) {
-        val path = getItem(position)
-        val isLast = position == itemCount - 1
-        holder.bind(path, isLast)
+        holder.bind(getItem(position), position == itemCount - 1)
     }
 
     inner class CrumbViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -33,14 +31,10 @@ class BreadcrumbAdapter(
             val name = path.substringAfterLast("/").ifEmpty { "Storage" }
             tvCrumb.text = name
             tvSeparator.visibility = if (isLast) View.GONE else View.VISIBLE
-
-            val color = if (isLast)
-                ContextCompat.getColor(itemView.context, R.color.crumb_active)
-            else
-                ContextCompat.getColor(itemView.context, R.color.crumb_inactive)
-
-            tvCrumb.setTextColor(color)
-
+            tvCrumb.setTextColor(
+                if (isLast) ContextCompat.getColor(itemView.context, R.color.crumb_active)
+                else ContextCompat.getColor(itemView.context, R.color.crumb_inactive)
+            )
             itemView.setOnClickListener { onCrumbClick(path) }
         }
     }

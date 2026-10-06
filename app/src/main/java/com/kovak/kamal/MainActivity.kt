@@ -4,8 +4,6 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
-import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -14,6 +12,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.view.ActionMode
 import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -39,7 +38,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: FileViewModel
     private lateinit var manager: KamalFileManager
 
-    private var actionMode: androidx.appcompat.view.ActionMode? = null
+    private var actionMode: ActionMode? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,7 +62,6 @@ class MainActivity : AppCompatActivity() {
         initManager()
     }
 
-    // ─── Initialise Dhizuku — auto, no OTP, no prompt ────────────────────────
     private fun initManager() {
         progressBar.visibility = View.VISIBLE
         tvEmpty.text = "Connecting to Kamal File Manager..."
@@ -73,7 +71,6 @@ class MainActivity : AppCompatActivity() {
             val result = manager.init()
             when (result) {
                 KamalFileManager.InitResult.SUCCESS -> {
-                    // Set up ViewModel with the ready manager
                     val factory = FileViewModelFactory(manager)
                     viewModel = ViewModelProvider(this@MainActivity, factory)[FileViewModel::class.java]
                     observeViewModel()
@@ -86,7 +83,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 KamalFileManager.InitResult.PERMISSION_DENIED -> {
                     progressBar.visibility = View.GONE
-                    showError("Permission denied. Grant Kamal File Manager device owner access.")
+                    showError("Permission denied. Grant device owner access via ADB.")
                 }
                 else -> {
                     progressBar.visibility = View.GONE
@@ -107,14 +104,12 @@ class MainActivity : AppCompatActivity() {
             progressBar.visibility = if (loading) View.VISIBLE else View.GONE
         }
 
-        viewModel.currentPath.observe(this) { path ->
+        viewModel.currentPath.observe(this) {
             updateBreadcrumbs()
         }
 
         viewModel.toastMsg.observe(this) { msg ->
-            msg?.let {
-                Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
-            }
+            msg?.let { Toast.makeText(this, it, Toast.LENGTH_SHORT).show() }
         }
 
         viewModel.error.observe(this) { error ->
@@ -126,17 +121,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerViews() {
-        // File list
         fileAdapter = FileAdapter(
             context = this,
             onItemClick = { item ->
-                if (item.isDirectory) {
-                    viewModel.loadPath(item.path)
-                } else {
-                    openFile(item)
-                }
+                if (item.isDirectory) viewModel.loadPath(item.path)
+                else openFile(item)
             },
-            onItemLongClick = { item, view ->
+            onItemLongClick = { _, _ ->
                 startSelectionMode()
                 true
             }
@@ -148,10 +139,7 @@ class MainActivity : AppCompatActivity() {
             addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
         }
 
-        // Breadcrumb navigation
-        breadcrumbAdapter = BreadcrumbAdapter { path ->
-            viewModel.loadPath(path)
-        }
+        breadcrumbAdapter = BreadcrumbAdapter { path -> viewModel.loadPath(path) }
 
         rvBreadcrumb.apply {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
@@ -160,9 +148,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupFab() {
-        fabNewFolder.setOnClickListener {
-            showCreateFolderDialog()
-        }
+        fabNewFolder.setOnClickListener { showCreateFolderDialog() }
     }
 
     private fun updateBreadcrumbs() {
@@ -175,62 +161,35 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val free = manager.getFreeSpace("/sdcard")
             val total = manager.getTotalSpace("/sdcard")
-            val freeStr = formatBytes(free)
-            val totalStr = formatBytes(total)
-            tvStorageInfo.text = "Free: $freeStr / $totalStr"
+            tvStorageInfo.text = "Free: ${formatBytes(free)} / ${formatBytes(total)}"
         }
     }
 
-    // ─── Selection mode action bar ─────────────────────────────────────────────
     private fun startSelectionMode() {
         if (actionMode != null) return
         fileAdapter.selectionMode = true
 
-        actionMode = startSupportActionMode(object : androidx.appcompat.view.ActionMode.Callback {
-            override fun onCreateActionMode(mode: androidx.appcompat.view.ActionMode, menu: Menu): Boolean {
+        actionMode = startSupportActionMode(object : ActionMode.Callback {
+            override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
                 menuInflater.inflate(R.menu.menu_selection, menu)
                 return true
             }
 
-            override fun onPrepareActionMode(mode: androidx.appcompat.view.ActionMode, menu: Menu): Boolean {
-                return false
-            }
+            override fun onPrepareActionMode(mode: ActionMode, menu: Menu) = false
 
-            override fun onActionItemClicked(
-                mode: androidx.appcompat.view.ActionMode,
-                item: MenuItem
-            ): Boolean {
+            override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
                 val selected = fileAdapter.getSelectedPaths().toList()
                 return when (item.itemId) {
-                    R.id.action_copy -> {
-                        viewModel.copyToClipboard(selected)
-                        mode.finish()
-                        true
-                    }
-                    R.id.action_cut -> {
-                        viewModel.cutToClipboard(selected)
-                        mode.finish()
-                        true
-                    }
-                    R.id.action_delete -> {
-                        confirmDelete(selected) { mode.finish() }
-                        true
-                    }
-                    R.id.action_select_all -> {
-                        fileAdapter.selectAll()
-                        mode.title = "${fileAdapter.getSelectedPaths().size} selected"
-                        true
-                    }
-                    R.id.action_rename -> {
-                        if (selected.size == 1) showRenameDialog(selected[0])
-                        mode.finish()
-                        true
-                    }
+                    R.id.action_copy -> { viewModel.copyToClipboard(selected); mode.finish(); true }
+                    R.id.action_cut -> { viewModel.cutToClipboard(selected); mode.finish(); true }
+                    R.id.action_delete -> { confirmDelete(selected) { mode.finish() }; true }
+                    R.id.action_select_all -> { fileAdapter.selectAll(); mode.title = "${fileAdapter.getSelectedPaths().size} selected"; true }
+                    R.id.action_rename -> { if (selected.size == 1) showRenameDialog(selected[0]); mode.finish(); true }
                     else -> false
                 }
             }
 
-            override fun onDestroyActionMode(mode: androidx.appcompat.view.ActionMode) {
+            override fun onDestroyActionMode(mode: ActionMode) {
                 fileAdapter.clearSelection()
                 actionMode = null
             }
@@ -241,28 +200,20 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("Delete ${paths.size} item(s)?")
             .setMessage("This cannot be undone.")
-            .setPositiveButton("Delete") { _, _ ->
-                viewModel.delete(paths)
-                onConfirmed()
-            }
+            .setPositiveButton("Delete") { _, _ -> viewModel.delete(paths); onConfirmed() }
             .setNegativeButton("Cancel", null)
             .show()
     }
 
     private fun showRenameDialog(path: String) {
         val currentName = path.substringAfterLast("/")
-        val input = EditText(this).apply {
-            setText(currentName)
-            selectAll()
-        }
+        val input = EditText(this).apply { setText(currentName); selectAll() }
         AlertDialog.Builder(this)
             .setTitle("Rename")
             .setView(input)
             .setPositiveButton("Rename") { _, _ ->
                 val newName = input.text.toString().trim()
-                if (newName.isNotEmpty() && newName != currentName) {
-                    viewModel.rename(path, newName)
-                }
+                if (newName.isNotEmpty() && newName != currentName) viewModel.rename(path, newName)
             }
             .setNegativeButton("Cancel", null)
             .show()
@@ -294,7 +245,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ─── Options menu ──────────────────────────────────────────────────────────
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
         return true
@@ -302,38 +252,19 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.action_paste -> {
-                viewModel.paste()
-                true
-            }
-            R.id.action_refresh -> {
-                viewModel.refresh()
-                true
-            }
-            R.id.action_go_data -> {
-                viewModel.loadPath("/sdcard/Android/data")
-                true
-            }
-            R.id.action_go_obb -> {
-                viewModel.loadPath("/sdcard/Android/obb")
-                true
-            }
-            R.id.action_go_home -> {
-                viewModel.loadPath("/sdcard")
-                true
-            }
+            R.id.action_paste -> { viewModel.paste(); true }
+            R.id.action_refresh -> { viewModel.refresh(); true }
+            R.id.action_go_data -> { viewModel.loadPath("/sdcard/Android/data"); true }
+            R.id.action_go_obb -> { viewModel.loadPath("/sdcard/Android/obb"); true }
+            R.id.action_go_home -> { viewModel.loadPath("/sdcard"); true }
             else -> super.onOptionsItemSelected(item)
         }
     }
 
+    @Suppress("OVERRIDE_DEPRECATION")
     override fun onBackPressed() {
-        if (fileAdapter.selectionMode) {
-            actionMode?.finish()
-            return
-        }
-        if (!viewModel.navigateUp()) {
-            super.onBackPressed()
-        }
+        if (fileAdapter.selectionMode) { actionMode?.finish(); return }
+        if (!viewModel.navigateUp()) super.onBackPressed()
     }
 
     private fun showSetupDialog() {
@@ -341,7 +272,7 @@ class MainActivity : AppCompatActivity() {
             .setTitle("One-Time Setup Required")
             .setMessage(
                 "Kamal File Manager needs Device Owner access.\n\n" +
-                "Run this command once via ADB:\n\n" +
+                "Run once via ADB:\n\n" +
                 "adb shell dpm set-device-owner com.kovak.kamal/.DhizukuAdmin\n\n" +
                 "Then restart the app."
             )
