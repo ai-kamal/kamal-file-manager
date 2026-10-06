@@ -53,8 +53,9 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.8.2")
     implementation("androidx.fragment:fragment-ktx:1.6.2")
 
-    // Dhizuku — device owner IPC, bundled AAR (JitPack builds are broken)
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))
+    // Shizuku — elevated file access without device owner (works with ADB/wireless debugging)
+    implementation("dev.rikka.shizuku:api:13.1.5")
+    implementation("dev.rikka.shizuku:provider:13.1.5")
 
     // JSON
     implementation("com.google.code.gson:gson:2.10.1")

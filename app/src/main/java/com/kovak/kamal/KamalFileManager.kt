@@ -7,49 +7,70 @@ import android.content.pm.PackageManager
 import android.os.IBinder
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.rosan.dhizuku.api.Dhizuku
-import com.rosan.dhizuku.api.DhizukuRequestPermissionListener
-import com.rosan.dhizuku.api.DhizukuUserServiceArgs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import rikka.shizuku.Shizuku
 import kotlin.coroutines.resume
 
 class KamalFileManager(private val context: Context) {
 
     private var service: IRemoteService? = null
+    private var serviceConnection: ServiceConnection? = null
     private val gson = Gson()
 
-    suspend fun init(): InitResult = withContext(Dispatchers.IO) {
-        return@withContext try {
-            val ready = Dhizuku.init(context)
-            if (!ready) return@withContext InitResult.DHIZUKU_NOT_AVAILABLE
-
-            if (!Dhizuku.isPermissionGranted()) {
-                val granted = suspendCancellableCoroutine { cont ->
-                    Dhizuku.requestPermission(object : DhizukuRequestPermissionListener() {
-                        override fun onRequestPermission(grantResult: Int) {
-                            cont.resume(grantResult == PackageManager.PERMISSION_GRANTED)
-                        }
-                    })
-                }
-                if (!granted) return@withContext InitResult.PERMISSION_DENIED
+    suspend fun init(): InitResult {
+        return try {
+            // Is Shizuku running?
+            if (!Shizuku.pingBinder()) {
+                return InitResult.DHIZUKU_NOT_AVAILABLE
             }
 
-            val args = DhizukuUserServiceArgs(
-                ComponentName(context, RemoteService::class.java)
-            )
+            // Request permission if not already granted
+            if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+                val granted = withContext(Dispatchers.Main) {
+                    suspendCancellableCoroutine { cont ->
+                        val listener = object : Shizuku.OnRequestPermissionResultListener {
+                            override fun onRequestPermissionResult(reqCode: Int, grantResult: Int) {
+                                Shizuku.removeRequestPermissionResultListener(this)
+                                if (cont.isActive)
+                                    cont.resume(grantResult == PackageManager.PERMISSION_GRANTED)
+                            }
+                        }
+                        Shizuku.addRequestPermissionResultListener(listener)
+                        cont.invokeOnCancellation {
+                            Shizuku.removeRequestPermissionResultListener(listener)
+                        }
+                        Shizuku.requestPermission(42)
+                    }
+                }
+                if (!granted) return InitResult.PERMISSION_DENIED
+            }
 
-            val connected = suspendCancellableCoroutine { cont ->
-                Dhizuku.bindUserService(args, object : ServiceConnection {
+            // Bind RemoteService via Shizuku UserService
+            val args = Shizuku.UserServiceArgs(
+                ComponentName(context.packageName, RemoteService::class.java.name)
+            )
+                .daemon(false)
+                .processNameSuffix("service")
+                .debuggable(false)
+                .version(1)
+
+            val connected = suspendCancellableCoroutine<Boolean> { cont ->
+                serviceConnection = object : ServiceConnection {
                     override fun onServiceConnected(name: ComponentName, binder: IBinder) {
                         service = IRemoteService.Stub.asInterface(binder)
-                        cont.resume(true)
+                        if (cont.isActive) cont.resume(true)
                     }
                     override fun onServiceDisconnected(name: ComponentName) {
                         service = null
                     }
-                })
+                }
+                try {
+                    Shizuku.bindUserService(args, serviceConnection!!)
+                } catch (e: Exception) {
+                    if (cont.isActive) cont.resume(false)
+                }
             }
 
             if (connected) InitResult.SUCCESS else InitResult.SERVICE_FAILED

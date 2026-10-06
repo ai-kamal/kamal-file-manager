@@ -120,11 +120,11 @@ class MainActivity : AppCompatActivity() {
                 }
                 KamalFileManager.InitResult.PERMISSION_DENIED -> {
                     progressBar.visibility = View.GONE
-                    showError("Permission denied. Grant device owner via ADB.")
+                    showError("Permission denied. Open Shizuku and grant access to this app.")
                 }
                 else -> {
                     progressBar.visibility = View.GONE
-                    showError("Initialization failed. Run setup command and restart.")
+                    showError("Initialization failed. Make sure Shizuku is running.")
                 }
             }
         }
@@ -405,12 +405,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun showSetupDialog() {
         AlertDialog.Builder(this)
-            .setTitle("One-Time Setup Required")
+            .setTitle("Shizuku Required")
             .setMessage(
-                "Kamal File Manager needs Device Owner access.\n\n" +
-                "Run once via ADB:\n\n" +
-                "adb shell dpm set-device-owner \\\n  com.kovak.kamal/.DhizukuAdmin\n\n" +
-                "Then restart the app."
+                "Kamal File Manager needs Shizuku to access Android/data.\n\n" +
+                "Steps:\n" +
+                "1. Install Shizuku from Play Store\n" +
+                "2. Open Shizuku → tap 'Pairing' → use wireless debugging\n" +
+                "   OR run via ADB:\n" +
+                "   adb shell sh /sdcard/Android/data/moe.shizuku.privileged.api/start.sh\n\n" +
+                "3. Restart this app and grant permission."
             )
             .setPositiveButton("OK", null)
             .show()
