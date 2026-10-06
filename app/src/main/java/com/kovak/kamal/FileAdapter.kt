@@ -37,8 +37,6 @@ class FileAdapter(
         notifyDataSetChanged()
     }
 
-    fun getSelectedPaths(): Set<String> = selectedPaths.toSet()
-
     fun clearSelection() {
         selectedPaths.clear()
         selectionMode = false

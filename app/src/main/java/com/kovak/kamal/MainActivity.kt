@@ -178,12 +178,12 @@ class MainActivity : AppCompatActivity() {
             override fun onPrepareActionMode(mode: ActionMode, menu: Menu) = false
 
             override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
-                val selected = fileAdapter.getSelectedPaths().toList()
+                val selected = fileAdapter.selectedPaths.toList()
                 return when (item.itemId) {
                     R.id.action_copy -> { viewModel.copyToClipboard(selected); mode.finish(); true }
                     R.id.action_cut -> { viewModel.cutToClipboard(selected); mode.finish(); true }
                     R.id.action_delete -> { confirmDelete(selected) { mode.finish() }; true }
-                    R.id.action_select_all -> { fileAdapter.selectAll(); mode.title = "${fileAdapter.getSelectedPaths().size} selected"; true }
+                    R.id.action_select_all -> { fileAdapter.selectAll(); mode.title = "${fileAdapter.selectedPaths.size} selected"; true }
                     R.id.action_rename -> { if (selected.size == 1) showRenameDialog(selected[0]); mode.finish(); true }
                     else -> false
                 }
