@@ -20,22 +20,16 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Accept SDK licenses and install Platform 37
+      - name: Fix android-37 platform path
+        # The runner ships android-37.0 but AGP looks for android-37 (no minor version).
+        # Create symlink so Gradle finds the already-installed platform.
         run: |
-          mkdir -p "$ANDROID_HOME/licenses"
-          printf "24333f8a63b6825ea9c5514f83c2829b004d1fee\nd56f5187479451eabf01fb78af6dfcb131a6481e" \
-            > "$ANDROID_HOME/licenses/android-sdk-license"
-          printf "84831b9409646a918e30573bab4c9c91346d8abd" \
-            > "$ANDROID_HOME/licenses/android-sdk-preview-license"
-          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -1)
-          echo "Using sdkmanager at: $SDKMANAGER"
-          # channel=3 = canary, includes preview/pre-release SDKs like android-37
-          if yes | "$SDKMANAGER" --channel=3 "platforms;android-37" "build-tools;35.0.0"; then
-            echo "android-37 installed successfully"
-          else
-            echo "=== android-37 not found, listing all available android platforms ==="
-            "$SDKMANAGER" --list --channel=3 2>/dev/null | grep -i "platforms;android" | head -30
-            exit 1
+          PLATFORMS="$ANDROID_HOME/platforms"
+          echo "Installed platforms:"
+          ls "$PLATFORMS/"
+          if [ -d "$PLATFORMS/android-37.0" ] && [ ! -d "$PLATFORMS/android-37" ]; then
+            sudo ln -s "$PLATFORMS/android-37.0" "$PLATFORMS/android-37"
+            echo "Symlink created: android-37 -> android-37.0"
           fi
 
       - name: Write local.properties
