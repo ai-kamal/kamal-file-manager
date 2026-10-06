@@ -21,15 +21,14 @@ jobs:
           cache: gradle
 
       - name: Fix android-37 platform path
-        # The runner ships android-37.0 but AGP looks for android-37 (no minor version).
-        # Create symlink so Gradle finds the already-installed platform.
+        # android-37.0 is installed but AGP expects android-37 AND package.xml must match.
+        # Symlink alone isn't enough — AGP validates package.xml path attribute too.
         run: |
           PLATFORMS="$ANDROID_HOME/platforms"
-          echo "Installed platforms:"
-          ls "$PLATFORMS/"
           if [ -d "$PLATFORMS/android-37.0" ] && [ ! -d "$PLATFORMS/android-37" ]; then
-            sudo ln -s "$PLATFORMS/android-37.0" "$PLATFORMS/android-37"
-            echo "Symlink created: android-37 -> android-37.0"
+            sudo cp -r "$PLATFORMS/android-37.0" "$PLATFORMS/android-37"
+            sudo sed -i 's/platforms;android-37\.0/platforms;android-37/g' "$PLATFORMS/android-37/package.xml"
+            echo "Copied android-37.0 to android-37 and patched package.xml"
           fi
 
       - name: Write local.properties
