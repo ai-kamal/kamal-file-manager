@@ -15,6 +15,11 @@
         app:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/action_go_home"
+        android:title="Home (/sdcard)"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_go_data"
         android:title="Android/data"
         app:showAsAction="never" />
@@ -22,11 +27,6 @@
     <item
         android:id="@+id/action_go_obb"
         android:title="Android/obb"
-        app:showAsAction="never" />
-
-    <item
-        android:id="@+id/action_go_home"
-        android:title="Home (/sdcard)"
         app:showAsAction="never" />
 
 </menu>

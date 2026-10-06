@@ -1,4 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Kamal File Manager</string>
+
+    <!-- Sort -->
+    <string name="sort_by">Sort by</string>
+    <string name="sort_name_az">Name (A → Z)</string>
+    <string name="sort_name_za">Name (Z → A)</string>
+    <string name="sort_size_asc">Size (smallest first)</string>
+    <string name="sort_size_desc">Size (largest first)</string>
+    <string name="sort_date_new">Date (newest first)</string>
+    <string name="sort_date_old">Date (oldest first)</string>
+    <string name="sort_type">Type</string>
+
+    <!-- Bottom nav -->
+    <string name="nav_home">Home</string>
+    <string name="nav_downloads">Downloads</string>
+    <string name="nav_images">Images</string>
+    <string name="nav_videos">Videos</string>
+    <string name="nav_data">App Data</string>
+
+    <!-- Actions -->
+    <string name="action_search">Search files…</string>
+    <string name="action_share">Share</string>
+    <string name="action_open_with">Open with</string>
+    <string name="action_compress">Compress to ZIP</string>
+
+    <!-- Misc -->
+    <string name="empty_folder">This folder is empty</string>
+    <string name="grid_view">Grid view</string>
+    <string name="list_view">List view</string>
 </resources>

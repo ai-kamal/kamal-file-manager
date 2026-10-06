@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Allow sharing from anywhere on external storage including Android/data -->
+    <external-path
+        name="external_files"
+        path="." />
+    <!-- Root path for absolute paths -->
+    <root-path
+        name="root"
+        path="." />
+</paths>

@@ -8,6 +8,21 @@ import kotlinx.coroutines.launch
 
 class FileViewModel(private val manager: KamalFileManager) : ViewModel() {
 
+    // ── Public enums ─────────────────────────────────────────────
+    enum class SortMode {
+        NAME_ASC, NAME_DESC, SIZE_ASC, SIZE_DESC, DATE_DESC, DATE_ASC, TYPE
+    }
+
+    enum class ClipMode { NONE, COPY, CUT }
+
+    // ── Internal state ────────────────────────────────────────────
+    private val rawFiles = mutableListOf<FileItem>()           // un-filtered, un-sorted
+    var sortMode: SortMode = SortMode.NAME_ASC
+        private set
+    var searchQuery: String = ""
+        private set
+
+    // ── Exposed LiveData ──────────────────────────────────────────
     private val _files = MutableLiveData<List<FileItem>>(emptyList())
     val files: LiveData<List<FileItem>> = _files
 
@@ -23,28 +38,33 @@ class FileViewModel(private val manager: KamalFileManager) : ViewModel() {
     private val _toastMsg = MutableLiveData<String?>(null)
     val toastMsg: LiveData<String?> = _toastMsg
 
+    // ── Clipboard ─────────────────────────────────────────────────
     private var clipboardPaths = mutableListOf<String>()
     private var clipboardMode = ClipMode.NONE
 
+    // ── Breadcrumbs ────────────────────────────────────────────────
     val breadcrumbs: List<String>
         get() {
             val path = _currentPath.value ?: "/sdcard"
             val parts = path.split("/").filter { it.isNotEmpty() }
             val crumbs = mutableListOf<String>()
-            var accumulated = ""
-            for (part in parts) { accumulated += "/$part"; crumbs.add(accumulated) }
+            var acc = ""
+            for (part in parts) { acc += "/$part"; crumbs.add(acc) }
             return crumbs
         }
 
+    // ── Navigation ────────────────────────────────────────────────
     fun loadPath(path: String) {
         _currentPath.value = path
+        searchQuery = ""          // clear search on folder change
         viewModelScope.launch {
             _loading.value = true
             _error.value = null
             val result = manager.listFiles(path)
-            _files.value = result
+            rawFiles.clear()
+            rawFiles.addAll(result)
+            applyFilterAndSort()
             _loading.value = false
-            if (result.isEmpty()) _error.value = "Empty folder or access denied"
         }
     }
 
@@ -56,8 +76,47 @@ class FileViewModel(private val manager: KamalFileManager) : ViewModel() {
         return true
     }
 
-    fun refresh() = loadPath(_currentPath.value ?: "/sdcard")
+    fun refresh() {
+        viewModelScope.launch {
+            _loading.value = true
+            val result = manager.listFiles(_currentPath.value ?: "/sdcard")
+            rawFiles.clear()
+            rawFiles.addAll(result)
+            applyFilterAndSort()
+            _loading.value = false
+        }
+    }
 
+    // ── Sort & search ─────────────────────────────────────────────
+    fun setSort(mode: SortMode) {
+        sortMode = mode
+        applyFilterAndSort()
+    }
+
+    fun setSearch(query: String) {
+        searchQuery = query
+        applyFilterAndSort()
+    }
+
+    private fun applyFilterAndSort() {
+        val q = searchQuery.lowercase().trim()
+        val filtered = if (q.isEmpty()) rawFiles.toList()
+                       else rawFiles.filter { it.name.lowercase().contains(q) }
+
+        val sorted = when (sortMode) {
+            SortMode.NAME_ASC  -> filtered.sortedWith(compareBy({ !it.isDirectory }, { it.name.lowercase() }))
+            SortMode.NAME_DESC -> filtered.sortedWith(compareBy<FileItem> { !it.isDirectory }.thenByDescending { it.name.lowercase() })
+            SortMode.SIZE_ASC  -> filtered.sortedWith(compareBy<FileItem> { !it.isDirectory }.thenBy { it.size })
+            SortMode.SIZE_DESC -> filtered.sortedWith(compareBy<FileItem> { !it.isDirectory }.thenByDescending { it.size })
+            SortMode.DATE_DESC -> filtered.sortedWith(compareBy<FileItem> { !it.isDirectory }.thenByDescending { it.lastModified })
+            SortMode.DATE_ASC  -> filtered.sortedWith(compareBy<FileItem> { !it.isDirectory }.thenBy { it.lastModified })
+            SortMode.TYPE      -> filtered.sortedWith(compareBy({ it.fileTypeIcon.ordinal }, { it.name.lowercase() }))
+        }
+
+        _files.value = sorted
+    }
+
+    // ── Clipboard ops ─────────────────────────────────────────────
     fun copyToClipboard(paths: List<String>) {
         clipboardPaths = paths.toMutableList()
         clipboardMode = ClipMode.COPY
@@ -81,7 +140,7 @@ class FileViewModel(private val manager: KamalFileManager) : ViewModel() {
                 val dest = "$destDir/$fileName"
                 val ok = when (clipboardMode) {
                     ClipMode.COPY -> manager.copy(src, dest)
-                    ClipMode.CUT -> manager.move(src, dest)
+                    ClipMode.CUT  -> manager.move(src, dest)
                     ClipMode.NONE -> false
                 }
                 if (ok) successCount++
@@ -123,6 +182,4 @@ class FileViewModel(private val manager: KamalFileManager) : ViewModel() {
     }
 
     fun hasClipboard() = clipboardPaths.isNotEmpty()
-
-    enum class ClipMode { NONE, COPY, CUT }
 }

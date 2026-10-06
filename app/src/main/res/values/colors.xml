@@ -1,32 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Background -->
-    <color name="bg_primary">#F8F9FA</color>
+    <color name="bg_primary">#F4F6FB</color>
     <color name="surface">#FFFFFF</color>
-    <color name="surface_variant">#F1F3F5</color>
+    <color name="surface_variant">#EEF2FF</color>
+    <color name="surface_elevated">#FFFFFF</color>
 
     <!-- Text -->
-    <color name="text_primary">#1A1A2E</color>
-    <color name="text_secondary">#6C757D</color>
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#64748B</color>
+    <color name="text_hint">#94A3B8</color>
 
-    <!-- Accent -->
-    <color name="accent">#4361EE</color>
+    <!-- Accent — indigo blue -->
+    <color name="accent">#4F46E5</color>
+    <color name="accent_dark">#3730A3</color>
     <color name="accent_light">#EEF2FF</color>
+    <color name="accent_surface">#E0E7FF</color>
 
     <!-- Breadcrumb -->
-    <color name="crumb_active">#4361EE</color>
-    <color name="crumb_inactive">#6C757D</color>
-    <color name="crumb_separator">#ADB5BD</color>
+    <color name="crumb_active">#4F46E5</color>
+    <color name="crumb_inactive">#64748B</color>
+    <color name="crumb_separator">#CBD5E1</color>
 
     <!-- File type icon tints -->
-    <color name="tint_folder">#F4A261</color>
-    <color name="tint_image">#4CC9F0</color>
-    <color name="tint_video">#F72585</color>
-    <color name="tint_audio">#7209B7</color>
-    <color name="tint_pdf">#E63946</color>
-    <color name="tint_archive">#2D6A4F</color>
-    <color name="tint_apk">#3A86FF</color>
-    <color name="tint_default">#6C757D</color>
+    <color name="tint_folder">#F59E0B</color>
+    <color name="tint_image">#06B6D4</color>
+    <color name="tint_video">#EC4899</color>
+    <color name="tint_audio">#8B5CF6</color>
+    <color name="tint_pdf">#EF4444</color>
+    <color name="tint_archive">#10B981</color>
+    <color name="tint_apk">#3B82F6</color>
+    <color name="tint_text">#64748B</color>
+    <color name="tint_document">#0EA5E9</color>
+    <color name="tint_default">#94A3B8</color>
+
+    <!-- Bottom nav -->
+    <color name="bottom_nav_bg">#FFFFFF</color>
+    <color name="bottom_nav_selected">#4F46E5</color>
+    <color name="bottom_nav_unselected">#94A3B8</color>
+
+    <!-- Divider -->
+    <color name="divider">#E2E8F0</color>
+
+    <!-- Search -->
+    <color name="search_bg">#F1F5F9</color>
 
     <!-- Material defaults -->
     <color name="purple_200">#FFBB86FC</color>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:background="?attr/selectableItemBackground">
+
+    <!-- Thumbnail or icon square -->
+    <FrameLayout
+        android:id="@+id/iconContainerGrid"
+        android:layout_width="match_parent"
+        android:layout_height="96dp"
+        android:background="@drawable/bg_thumbnail">
+
+        <ImageView
+            android:id="@+id/ivFileIconGrid"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:padding="6dp"
+            android:scaleType="fitCenter" />
+
+        <ImageView
+            android:id="@+id/ivThumbnailGrid"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            android:background="@drawable/bg_thumbnail" />
+
+        <!-- Selection badge -->
+        <ImageView
+            android:id="@+id/ivSelectedGrid"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="top|end"
+            android:layout_margin="4dp"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+    <!-- Name -->
+    <TextView
+        android:id="@+id/tvFileNameGrid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textColor="@color/text_primary"
+        android:textSize="12sp"
+        android:fontFamily="sans-serif-medium"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:gravity="center_horizontal" />
+
+    <!-- Meta -->
+    <TextView
+        android:id="@+id/tvFileMetaGrid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textColor="@color/text_hint"
+        android:textSize="10sp"
+        android:gravity="center_horizontal"
+        android:singleLine="true" />
+
+</LinearLayout>
