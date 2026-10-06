@@ -27,7 +27,7 @@ class KamalFileManager(private val context: Context) {
 
             if (!Dhizuku.isPermissionGranted()) {
                 val granted = suspendCancellableCoroutine { cont ->
-                    Dhizuku.requestPermission(object : DhizukuRequestPermissionListener {
+                    Dhizuku.requestPermission(object : DhizukuRequestPermissionListener() {
                         override fun onRequestPermission(grantResult: Int) {
                             cont.resume(grantResult == PackageManager.PERMISSION_GRANTED)
                         }
