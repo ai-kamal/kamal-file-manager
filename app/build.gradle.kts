@@ -53,8 +53,8 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.8.2")
     implementation("androidx.fragment:fragment-ktx:1.6.2")
 
-    // Dhizuku — device owner IPC (one-time ADB setup, auto forever after)
-    implementation("com.github.iamr0s:Dhizuku-API:2.5.2")
+    // Dhizuku — device owner IPC, bundled AAR (JitPack builds are broken)
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))
 
     // JSON
     implementation("com.google.code.gson:gson:2.10.1")
